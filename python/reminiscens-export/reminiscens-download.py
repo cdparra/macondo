@@ -17,7 +17,12 @@ def download_picture(url,name):
     path = ./pictures
     """
     image=urllib.URLopener()
-    image.retrieve(url,name) 
+    try:
+    	image.retrieve(url,name) 
+    except IOError, e:
+    	print "Download ERROR" + str(e)
+
+
 
 
 # command arguments
@@ -55,6 +60,9 @@ with open(csv_file, 'rb') as csvfile:
 				os.makedirs(dirpath)
 
 			path = os.path.join(dirpath,picname)
-			download_picture(url,path)
+
+			# do not download twice
+			if not os.path.exists(path):
+				download_picture(url,path)
 		else: 
 			print "Story '"+title+"' has no valid URL associated"
