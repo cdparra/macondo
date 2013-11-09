@@ -30,25 +30,71 @@ parser = argparse.ArgumentParser(description='download photos from URLs listed i
 	fromfile_prefix_chars="@")
 parser.add_argument('file', help='csv file with URLs', action='store')
 parser.add_argument('dir', help='directory where pictures should be saved', action='store')
+parser.add_argument('outtesto', help='output file for stories', type=argparse.FileType('w'),default=sys.stdout)
+parser.add_argument('outmeta', help='output file for stories', type=argparse.FileType('w'),default=sys.stdout)
 args = parser.parse_args()
 
 # parse arguments
 csv_file = args.file
 picsdir = args.dir
+storyout = args.outtesto
+storydata = args.outmeta
 
 with open(csv_file, 'rb') as csvfile:
 	storyreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-	included_cols = [0, 1, 3, 4, 5] # right now, using specifically structured csv for my current need, 
+	included_cols = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13] # right now, using specifically structured csv for my current need, 
 								 # future version will support reading the model somewhere else 
+
+	storyidList = []
 
 	for story in storyreader:
 		content = list(story[i] for i in included_cols)
 		
 		storyid = content[0]	
 		title = content[1]		
-		photoid = content[2]
-		url = content[3]
-		picname = content[4]
+		text = content[2]	
+		photoid = content[3]
+		url = content[4]
+		picname = content[5]
+		year = content[6]
+		month = content[7]
+		day = content[8]
+		country = content[9]
+		region = content[10]
+		city = content[11]
+		place = content[12]
+
+		try:
+			storyidList.index(storyid) 
+		except ValueError:
+			storyidList.append(storyid)
+
+			output = "## STORIA *("+storyid+") "+title+ "*\n\n"
+			output+=" * Quando: **"+year
+			if month > 0:
+				output+="-"+month
+			if day > 0:
+				output+="-"+day
+
+			output+="**\n"
+			output += " * Dove: **"
+
+			if place!="":
+				output+=place+", "
+			if city!="":
+				output+=city+", "
+			if region!="":
+				output+=region+", "
+			if country!="":
+				output+=country+"**\n"
+
+			# write metadata of the story in a file
+			storydata.write(output+"\n\n")
+
+			output+=text+"\n\n---"
+
+			# write metadata plus text of the story in a file
+			storyout.write(output+"\n\n")
 
 		p = re.compile('http*') # pattern to test if the url is http
 
@@ -66,3 +112,5 @@ with open(csv_file, 'rb') as csvfile:
 				download_picture(url,path)
 		else: 
 			print "Story '"+title+"' has no valid URL associated"
+
+storyout.close()
